@@ -23,8 +23,6 @@ rf_model = joblib.load(str(MODEL_PATH))
 
 app = FastAPI()
 
-rf_model = joblib.load("rf_5class_full.joblib")
-
 class FlowFeatures(BaseModel):
     model_config = {"populate_by_name": True}
     protocol_type: float = Field(..., alias="Protocol Type")
