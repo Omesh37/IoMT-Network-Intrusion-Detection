@@ -1,7 +1,25 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-import joblib
 import pandas as pd
+import os, requests, joblib
+from pathlib import Path
+
+MODEL_PATH = Path("rf_5class_full.joblib")
+MODEL_URL = os.environ.get("MODEL_URL")  # set this in Render Environment
+
+def download_model():
+    if MODEL_PATH.exists():
+        return
+    if not MODEL_URL:
+        raise RuntimeError("MODEL_URL not set")
+    r = requests.get(MODEL_URL, stream=True)
+    r.raise_for_status()
+    with open(MODEL_PATH, "wb") as f:
+        for chunk in r.iter_content(8192):
+            f.write(chunk)
+
+download_model()
+rf_model = joblib.load(str(MODEL_PATH))
 
 app = FastAPI()
 
