@@ -11,7 +11,19 @@ IoMT devices are increasingly targeted, this project builds a detector for 18 re
 - Collapsed chunked capture files (e.g. `UDP1`...`UDP8`) into canonical labels via string processing
 - Mapped 19 canonical labels to 5 top-level categories using the paper's taxonomy
 - Persisted to Parquet at each stage for fast reload
+## EDA
+- Class balance: The catergory of attack is imbalance, example the DDoS is around 5 time more than Spoofing and same with for Benign, MQTT and Recon. Number of Attack is 7 time more than Benign.<img width="678" height="421" alt="download" src="https://github.com/user-attachments/assets/04b22d35-dac4-438c-8a9d-8c8ff129941d" /><img width="678" height="430" alt="download" src="https://github.com/user-attachments/assets/27eeb62a-4884-4b4e-9fba-b53cbe19af5b" />
 
+- Duration/Rate/IAT overlap: Spoofing distribution almost overlap the distribution of Benign, which make it more harder to differenticate between them.<img width="700" height="468" alt="download" src="https://github.com/user-attachments/assets/383e9b51-a9b5-466b-9fce-e82541e1748d" />
+
+- Correlation:
+ARP     IPv       1.000000
+LLC     ARP       1.000000
+IPv     ARP       1.000000
+ARP     LLC       1.000000
+These are highly correlated pair as per Heat map.<img width="1127" height="989" alt="download" src="https://github.com/user-attachments/assets/a29dc114-ccc5-495a-a3e3-3a316cf0212c" />
+
+- Conclusion: This EDA supports the 0.74 precision on Spoofing seen in the classification report.
 ## Modeling
 Staged approach —> binary first to validate the pipeline, then 5-class:
 - **Binary (Benign vs Attack)**: Attack recall ~1.00, Benign recall 0.95
