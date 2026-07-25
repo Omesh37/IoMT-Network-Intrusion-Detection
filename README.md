@@ -14,7 +14,8 @@ IoMT devices are increasingly targeted, this project builds a detector for 18 re
 ## EDA
 - Class balance: The catergory of attack is imbalance, example the DDoS is around 5 time more than Spoofing and same with for Benign, MQTT and Recon. Number of Attack is 7 time more than Benign.<img width="678" height="421" alt="download" src="https://github.com/user-attachments/assets/04b22d35-dac4-438c-8a9d-8c8ff129941d" /><img width="678" height="430" alt="download" src="https://github.com/user-attachments/assets/27eeb62a-4884-4b4e-9fba-b53cbe19af5b" />
 
-- Duration/Rate/IAT overlap: Spoofing distribution almost overlap the distribution of Benign, which make it more harder to differenticate between them.<img width="700" height="468" alt="download" src="https://github.com/user-attachments/assets/383e9b51-a9b5-466b-9fce-e82541e1748d" />
+- Duration/Rate/IAT overlap: Spoofing distribution almost overlap the distribution of Benign, which make it more harder to differenticate between them.
+<img width="700" height="468" alt="download" src="https://github.com/user-attachments/assets/383e9b51-a9b5-466b-9fce-e82541e1748d" />
 
 - Correlation:
 ARP     IPv       1.000000
