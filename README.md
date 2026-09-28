@@ -27,6 +27,7 @@ These are highly correlated pair as per Heat map.<img width="1127" height="989" 
 Distribution of Traffic Categories and binary classification balance
 <img width="1243" height="590" alt="image" src="https://github.com/user-attachments/assets/f6e2b628-8522-4b55-a9c4-98e9311c2dfb" />
 
+<img width="1390" height="989" alt="image" src="https://github.com/user-attachments/assets/ad114b29-edd2-45f2-84f6-31bce88696dd" />
 
 - Conclusion: This EDA supports the 0.74 precision on Spoofing seen in the classification report.
 ## Modeling
