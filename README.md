@@ -24,6 +24,10 @@ IPv     ARP       1.000000
 ARP     LLC       1.000000
 These are highly correlated pair as per Heat map.<img width="1127" height="989" alt="download" src="https://github.com/user-attachments/assets/a29dc114-ccc5-495a-a3e3-3a316cf0212c" />
 
+Distribution of Traffic Categories and binary classification balance
+<img width="1243" height="590" alt="image" src="https://github.com/user-attachments/assets/f6e2b628-8522-4b55-a9c4-98e9311c2dfb" />
+
+
 - Conclusion: This EDA supports the 0.74 precision on Spoofing seen in the classification report.
 ## Modeling
 Staged approach —> binary first to validate the pipeline, then 5-class:
