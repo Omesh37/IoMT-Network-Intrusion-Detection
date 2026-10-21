@@ -1,4 +1,4 @@
-# IoMT Network Intrusion Detection
+# ISecuring Medical IoT: A Statistical and Machine Learning Approach to Network Intrusion Detection
 
 ML-based intrusion detection for medical IoT (IoMT) network traffic, using the CICIoMT2024 dataset (Canadian Institute for Cybersecurity, UNB). Classifies network flows as Benign or one of 5 attack categories (DDoS, DoS, MQTT, Recon, Spoofing), served via a FastAPI endpoint, containerized with Docker.
 
