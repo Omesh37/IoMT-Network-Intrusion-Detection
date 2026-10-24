@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / coverage cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments & Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Large datasets & network captures (keep git repo lightweight)
+*.parquet
+*.csv
+*.pcap
+*.pcapng
+
+# IDE & Operating System artifacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Streamlit runtime secrets
+.streamlit/secrets.toml

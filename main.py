@@ -5,7 +5,7 @@ import os, requests, joblib
 from pathlib import Path
 
 MODEL_PATH = Path("rf_5class_full.joblib")
-MODEL_URL = os.environ.get("MODEL_URL")  # set this in Render Environment
+MODEL_URL = os.environ.get("MODEL_URL")  
 
 def download_model():
     if MODEL_PATH.exists():
@@ -74,7 +74,7 @@ class FlowFeatures(BaseModel):
 @app.post("/predict")
 def predict(data: FlowFeatures):
     input_df = pd.DataFrame([data.model_dump(by_alias=True)])
-    input_df = input_df[rf_model.feature_names_in_]  # match training column order exactly
+    input_df = input_df[rf_model.feature_names_in_] 
 
     prediction = rf_model.predict(input_df)[0]
     proba = rf_model.predict_proba(input_df)[0]
