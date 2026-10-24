@@ -1,90 +1,160 @@
-# IoMT Network Intrusion Detection & Statistics Testbed
+# Securing Medical IoT: A Statistical and Machine Learning Approach to Network Intrusion Detection
 
-ML-based intrusion detection and interactive statistical learning testbed for medical IoT (IoMT) network traffic, using the CICIoMT2024 dataset (Canadian Institute for Cybersecurity, UNB). Classifies network flows as Benign or one of 5 attack categories (DDoS, DoS, MQTT, Recon, Spoofing), served via a FastAPI endpoint and an interactive, multi-tab Streamlit statistics dashboard for university **Probability and Statistics** coursework.
+ML-based intrusion detection and interactive statistical learning testbed for medical IoT (IoMT) network traffic, using the **CICIoMT2024** dataset (Canadian Institute for Cybersecurity, UNB). Classifies network flows as Benign or one of 5 attack categories (DDoS, DoS, MQTT, Recon, Spoofing), served via a FastAPI REST API and an interactive, multi-tab Streamlit dashboard designed for university **Probability and Statistics** coursework.
 
 ---
 
-## 📊 Statistics Dashboard
+## 🎯 Problem Statement
+Internet of Medical Things (IoMT) devices (e.g., patient monitors, infusion pumps, diagnostic telemetry sensors) are increasingly targeted by cyber attacks. This project investigates and detects 18 real attack variants across 5 major categories deployed against a realistic clinical IoT network testbed, evaluating both statistical signatures and supervised machine learning performance.
 
-An interactive university-grade probability and statistics dashboard built on real medical IoT telemetry. Every statistical concept is calculated dynamically from the data with plain-English *"What this means for IoMT security"* interpretations.
+---
 
-### 🖼️ Dashboard Preview
+## 🛠️ Data Engineering
+- **Source**: CICIoMT2024 `WiFi_and_MQTT/csv` split — 51 raw capture files (~1.9 GB), one capture file per attack-scenario.
+- **Label Reconstruction**: Reconstructed canonical labels directly from file metadata (raw packet records lack a label column).
+- **Consolidation**: Collapsed chunked packet captures (e.g., `UDP1` through `UDP8`) into unified scenario classes.
+- **Hierarchical Taxonomy**: Mapped 19 granular capture labels to 5 standardized attack categories + Benign using the paper's taxonomy.
+- **Format**: Preprocessed into high-performance Parquet format with 45 flow telemetry features.
+
+---
+
+## 📈 Exploratory Data Analysis (EDA)
+
+### Class Imbalance
+The network traffic exhibits natural real-world class imbalance. Volumetric attacks (such as DDoS and DoS) significantly outnumber rare evasion attacks like Spoofing:
+- Attack flows outnumber Benign flows by approximately 7:1 in total traffic volume.
+- DDoS alone accounts for nearly 5× the traffic of Spoofing, MQTT, or Reconnaissance.
+
+<p align="center">
+  <img width="48%" alt="Class Balance Distribution" src="https://github.com/user-attachments/assets/04b22d35-dac4-438c-8a9d-8c8ff129941d" />
+  <img width="48%" alt="Attack Category Breakdown" src="https://github.com/user-attachments/assets/27eeb62a-4884-4b4e-9fba-b53cbe19af5b" />
+</p>
+
+### Distribution Overlap (Benign vs. Spoofing)
+Spoofing attacks exhibit Duration, Rate, and Inter-Arrival Time (IAT) distributions that closely overlap normal Benign medical communications, making statistical discrimination challenging:
+
+<p align="center">
+  <img width="70%" alt="Feature Overlap Analysis" src="https://github.com/user-attachments/assets/383e9b51-a9b5-466b-9fce-e82541e1748d" />
+</p>
+
+### Multicollinearity in Network Protocols
+Certain protocol header fields co-occur deterministically in Ethernet packet encapsulation:
+- **`ARP` & `IPv`**: $r = 1.000$
+- **`LLC` & `ARP`**: $r = 1.000$
+- **`IPv` & `LLC`**: $r = 1.000$
+
+<p align="center">
+  <img width="75%" alt="Feature Correlation Heatmap" src="https://github.com/user-attachments/assets/a29dc114-ccc5-495a-a3e3-3a316cf0212c" />
+</p>
+
+### Traffic Distribution & Binary Balance
+<p align="center">
+  <img width="60%" alt="Traffic Distribution" src="https://github.com/user-attachments/assets/f6e2b628-8522-4b55-a9c4-98e9311c2dfb" />
+</p>
+<p align="center">
+  <img width="70%" alt="Binary vs Multi-class Balance" src="https://github.com/user-attachments/assets/ad114b29-edd2-45f2-84f6-31bce88696dd" />
+</p>
+
+---
+
+## 🤖 Modeling & Evaluation
+A staged machine learning approach was implemented using Random Forest ensembles:
+- **Binary Model (Benign vs. Attack)**:
+  - Attack Recall: **1.00**
+  - Benign Recall: **0.95**
+- **5-Class Model (DDoS, DoS, MQTT, Recon, Spoofing)**:
+  - Near-perfect classification on volumetric flood attacks (DDoS/DoS/MQTT: $\approx 1.00$ F1).
+  - Challenging detection on stealth attacks (Spoofing: **0.74 Precision, 0.82 Recall**).
+  - Evaluated using both **Macro-Average F1 (0.95)** and **Weighted-Average F1 (0.99)** to ensure the minority Spoofing class is rigorously assessed rather than masked by high-frequency DoS floods.
+  - Top informative features: `Max`, `Magnitue`, `Variance`, `rst_count`.
+
+---
+
+## 📊 Interactive Statistics Dashboard
+
+A dedicated, multi-tab Streamlit dashboard designed for a university **Probability and Statistics** course. Every statistical concept is dynamically computed from live telemetry flows, accompanied by plain-English *"What this means for IoMT security"* interpretations.
+
+### 🖼️ Dashboard Architecture
 ```
 +----------------------------------------------------------------------------------------------------+
 | 🛡️ Securing Medical IoT: A Statistical and Machine Learning Approach                              |
 | [🏠 Project Overview] [📊 Tab 1: Descriptive] [🎲 Tab 2: Probability] [📈 Tab 3: Normal/CLT]       |
 | [🔬 Tab 4: Inference/ANOVA] [🔗 Tab 5: Correlation/Regression] [🤖 Tab 6: Model & Errors]          |
 +----------------------------------------------------------------------------------------------------+
-| Global Sidebar Controls: Data source, Stratified sample slider (100k rows), Class filters, log1p  |
+| Global Sidebar Controls: Stratified sample slider (100k flows), Class filter, Seed, log1p toggle  |
 | Visualizations: Interactive Plotly distributions, Q-Q plots, CLT simulations, ANOVA & OLS Fit      |
 +----------------------------------------------------------------------------------------------------+
 ```
-*(Screenshot placeholder: `assets/dashboard_preview.png`)*
 
-### Quickstart & Installation
-```bash
-# 1. Clone repository and install dependencies
-pip install -r requirements.txt
-
-# 2. Launch the Streamlit dashboard
-streamlit run app.py
-```
-Visit `http://localhost:8501` in your browser.
-
-### Running with Docker
-- **Dashboard container**:
-  ```bash
-  docker build -f Dockerfile.dashboard -t iomt-dashboard .
-  docker run -p 8501:8501 iomt-dashboard
-  ```
-- **API container** (FastAPI `/predict` endpoint):
-  ```bash
-  docker build -t iomt-api .
-  docker run -p 8000:8000 iomt-api
-  ```
-
----
-
-## 📋 Course Syllabus Coverage Matrix
+### 📋 Course Syllabus Coverage Matrix
 
 | Course Unit | Syllabus Topic | Dashboard Module | Features & Interactive Controls |
 |---|---|---|---|
-| **Unit 1** | Types of Data (Qualitative vs Quantitative, Scales) | `Tab 1: Descriptive Stats` | Classification table of all 45 flow features; notes on Protocol Type nominal encoding and Bernoulli flags. |
-| **Unit 1** | Frequency Distribution (Count, Relative %, Cumulative %) | `Tab 1: Descriptive Stats` | Dynamic frequency table and interactive Plotly bar chart. |
-| **Unit 1** | Histograms, Box Plots, Violin Plots | `Tab 1: Descriptive Stats` | Bin-count slider (10-120), per-class box plots, optional violin plot toggle. |
-| **Unit 1** | Central Tendency & Dispersion (Mean, Median, Mode, Var, SD) | `Tab 1: Descriptive Stats` | Overall and per-class summary statistics with Bessel's correction ($s^2$). |
-| **Unit 1** | Relative Dispersion (CV) & Shape (Skewness, Kurtosis, IQR) | `Tab 1: Descriptive Stats` | Automated ranking of highest CV feature; Tukey 1.5×IQR outlier fences. |
-| **Unit 2** | Probability Axioms, Complement, and Addition Rule | `Tab 2: Probability & Distributions` | $P(A)$, $P(A') = 1 - P(A)$, $P(A \cup B)$ with interactive event selectors and Venn-style area visualizer. |
+| **Unit 1** | Types of Data (Qualitative vs Quantitative, Scales) | `Tab 1: Descriptive Stats` | Classification table of all 45 flow features; nominal protocol types and Bernoulli flags. |
+| **Unit 1** | Frequency Distributions (Count, Relative %, Cumulative %) | `Tab 1: Descriptive Stats` | Dynamic frequency table and interactive Plotly bar chart. |
+| **Unit 1** | Histograms, Box Plots, & Dispersion | `Tab 1: Descriptive Stats` | Bin slider (10-120), per-class box plots, mean, median, mode, variance, and standard deviation. |
+| **Unit 1** | Relative Dispersion (CV) & Shape (Skewness, Kurtosis, IQR) | `Tab 1: Descriptive Stats` | Automated ranking of highest CV feature; Tukey 1.5×IQR outlier detection fences. |
+| **Unit 2** | Probability Axioms, Complement, and Addition Rule | `Tab 2: Probability & Distributions` | $P(A)$, $P(A') = 1 - P(A)$, and $P(A \cup B)$ with interactive event selectors and Venn visualizer. |
 | **Unit 2** | Conditional Probability & Statistical Independence | `Tab 2: Probability & Distributions` | 2×2 Contingency table, $P(C \mid F)$, $P(F \cap C)$ vs $P(F)P(C)$ independence test. |
-| **Unit 2** | Bayes' Theorem & Base-Rate Effect | `Tab 2: Probability & Distributions` | Prior slider, sensitivity, specificity, posterior curve, and medical base-rate fallacy explainer. |
-| **Unit 2** | Discrete Distributions (Bernoulli, Binomial, Poisson) | `Tab 2: Probability & Distributions` | Bernoulli flag $p$, Binomial($n, p$) PMF/CDF sliders, Poisson($\lambda$) MLE on arrival counts. |
-| **Unit 2** | Continuous Distributions (Exponential MLE & Uniform) | `Tab 2: Probability & Distributions` | MLE $\hat{\lambda} = 1/\bar{x}$ on IAT, KS goodness-of-fit test; interactive Uniform $U(a, b)$. |
-| **Unit 3** | Normal Distribution Fitting & Diagnostic Tests | `Tab 3: Normal & Sampling` | Normal fit ($\mu, \sigma$), Q-Q plot, Shapiro-Wilk and D'Agostino normality tests with verbal verdicts. |
-| **Unit 3** | Standard Normal ($Z$-Scores) & Anomaly Detection | `Tab 3: Normal & Sampling` | Tail area calculator; outlier filtering ($|Z| > \text{threshold}$) and attack composition audit. |
+| **Unit 2** | Bayes' Theorem & Clinical Base-Rate Fallacy | `Tab 2: Probability & Distributions` | Interactive prior slider, sensitivity, specificity, posterior curve, and medical false-alarm explainer. |
+| **Unit 2** | Discrete Probability Distributions | `Tab 2: Probability & Distributions` | Bernoulli flag $p$, Binomial($n, p$) PMF/CDF, Poisson($\lambda$) MLE on packet arrivals. |
+| **Unit 2** | Continuous Probability Distributions | `Tab 2: Probability & Distributions` | Exponential MLE ($\hat{\lambda} = 1/\bar{x}$) on IAT with KS goodness-of-fit; Continuous Uniform $U(a, b)$. |
+| **Unit 3** | Normal Distribution Fitting & Normality Tests | `Tab 3: Normal & Sampling` | Normal fit ($\mu, \sigma$), Q-Q plots, Shapiro-Wilk and D'Agostino-Pearson tests. |
+| **Unit 3** | Standard Normal ($Z$-Scores) & Anomaly Detection | `Tab 3: Normal & Sampling` | Interactive $Z$-score calculator; $|Z| > \text{threshold}$ anomaly filter with attack composition audit. |
 | **Unit 3** | Normal Approximation to Discrete Distributions | `Tab 3: Normal & Sampling` | Normal approx to Binomial and Poisson with continuity correction ($\pm 0.5$) and error metric. |
-| **Unit 3** | Central Limit Theorem (CLT) Simulation | `Tab 3: Normal & Sampling` | Sliders for $n$ and $M$; theoretical $SE = \sigma/\sqrt{n}$ vs empirical SD of means; multi-sample size progression. |
-| **Unit 3** | Hypothesis Testing Rejection Regions | `Tab 3: Normal & Sampling` | Visualized rejection regions (two-tailed, right, left) on standard normal curve with $\alpha$ slider. |
-| **Unit 4** | Point Estimation & Proof of Bessel's Correction ($n-1$) | `Tab 4: Inference & ANOVA` | Monte Carlo simulation proving $S_n^2$ is downward-biased while $s^2$ ($n-1$) is unbiased. |
-| **Unit 4** | Confidence Intervals for Mean ($Z$ vs $t$) & Repeated Sampling | `Tab 4: Inference & ANOVA` | Confidence slider (80%-99%), $\sigma$ known/unknown toggle; 100-sample coverage simulation. |
-| **Unit 4** | Confidence Interval for a Proportion | `Tab 4: Inference & ANOVA` | 95% Wilson Score Interval for rare categories (e.g. Spoofing proportion and precision). |
-| **Unit 4** | One-Sample Hypothesis Testing ($Z$-Test & $t$-Test) | `Tab 4: Inference & ANOVA` | Automated null/alternative generation, critical values, $p$-value, rejection-region plot. |
-| **Unit 4** | Two-Sample Welch's $t$-Test & Effect Sizes | `Tab 4: Inference & ANOVA` | Benign vs Spoofing comparison, Welch-Satterthwaite $df$, Cohen's $d$ effect size interpretation. |
-| **Unit 4** | Type I ($\alpha$) and Type II ($\beta$) Errors & Statistical Power | `Tab 4: Inference & ANOVA` | Interactive trade-off plot; explicit mapping of Type I to false alarms and Type II to missed attacks. |
-| **Unit 4** | Chi-Square Goodness-of-Fit & Independence Tests | `Tab 4: Inference & ANOVA` | Uniform GOF test; Protocol vs Category independence test with Cramér's $V$ and Pearson residuals heatmap. |
+| **Unit 3** | Central Limit Theorem (CLT) Simulation | `Tab 3: Normal & Sampling` | Sliders for $n$ and $M$; theoretical $SE = \sigma/\sqrt{n}$ vs empirical SD of means; sample-size progression. |
+| **Unit 3** | Hypothesis Testing Rejection Regions | `Tab 3: Normal & Sampling` | Visualized rejection regions (two-tailed, right, left) on the standard Gaussian curve with $\alpha$ slider. |
+| **Unit 4** | Point Estimation & Bessel's Correction ($n-1$) | `Tab 4: Inference & ANOVA` | Monte Carlo simulation demonstrating sample variance bias ($n$) vs unbias ($n-1$). |
+| **Unit 4** | Confidence Intervals for Mean & Proportion | `Tab 4: Inference & ANOVA` | Confidence slider (80%-99%), $\sigma$ known/unknown toggle, 100-sample CI coverage simulation, Wilson Score interval. |
+| **Unit 4** | Hypothesis Testing ($Z$-Test, Welch's $t$-Test) | `Tab 4: Inference & ANOVA` | One-sample and two-sample tests, Welch-Satterthwaite $df$, and Cohen's $d$ effect sizes. |
+| **Unit 4** | Type I ($\alpha$) and Type II ($\beta$) Error Trade-off | `Tab 4: Inference & ANOVA` | Statistical power visualizer; mapping Type I to false alarms and Type II to missed intrusions. |
+| **Unit 4** | Chi-Square Goodness-of-Fit & Independence | `Tab 4: Inference & ANOVA` | Uniform GOF test; Protocol vs Category contingency table with Cramér's $V$ and Pearson residuals. |
 | **Unit 4** | One-Way ANOVA with $F$-Test & Tukey HSD | `Tab 4: Inference & ANOVA` | Complete ANOVA table (SSB, SSW, MS, $F$, $p$), Levene's variance test, Kruskal-Wallis, Tukey HSD. |
-| **Unit 4** | Big Data P-Value Saturation Slider | `Tab 4: Inference & ANOVA` | Subsampling slider to contrast tiny $p$-values with practical effect sizes on large network samples. |
-| **Unit 5** | Simple Linear Regression & Correlation | `Tab 5: Correlation & Regression` | OLS fit, Pearson correlation $r$, $R^2$, slope, intercept, and a single clean scatter plot with regression line. |
+| **Unit 5** | Simple Linear Regression & Correlation | `Tab 5: Correlation & Regression` | OLS regression line ($\hat{y} = b_0 + b_1 x$), Pearson $r$, $R^2$, and single clean scatter plot with trendline. |
 | **Unit 6** | Trained Random Forest 5-Class Evaluation | `Tab 6: Model & Error Analysis` | Confusion matrix heatmap, precision, recall, F1, and Gini feature importances. |
-| **Unit 6** | Macro-Average vs Weighted-Average Analysis | `Tab 6: Model & Error Analysis` | Demonstrates how weighted F1 (~0.99) conceals Spoofing weakness revealed by macro F1 (~0.95). |
-| **Unit 6** | Statistical Error Rates (Type I FPR & Type II FNR) | `Tab 6: Model & Error Analysis` | Per-class FPR and FNR with 95% Wilson Score Confidence Intervals. |
-| **Unit 6** | Interactive Live Flow Predictor & JSON Classifier | `Tab 6: Model & Error Analysis` | Slider and JSON input classifier (folds `demo.py`), optional link to FastAPI `/predict`. |
+| **Unit 6** | Statistical Error Rates (Type I FPR & Type II FNR) | `Tab 6: Model & Error Analysis` | Per-class false positive and false negative rates with 95% Wilson Score Confidence Intervals. |
+| **Unit 6** | Interactive Live Flow Predictor & JSON Classifier | `Tab 6: Model & Error Analysis` | Interactive feature slider / raw JSON classifier (folds `demo.py`), optional link to FastAPI `/predict`. |
+
+---
+
+## 🚀 Quickstart & Installation
+
+### Local Setup
+```bash
+# 1. Clone the repository
+git clone https://github.com/Omesh37/IoMT-Network-Intrusion-Detection.git
+cd IoMT-Network-Intrusion-Detection
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Launch the Streamlit Statistics Dashboard
+streamlit run app.py
+```
+Open your browser to `http://localhost:8501`.
+
+### Running with Docker
+
+#### 1. Streamlit Statistics Dashboard
+```bash
+docker build -f Dockerfile.dashboard -t iomt-dashboard .
+docker run -p 8501:8501 iomt-dashboard
+```
+Access at `http://localhost:8501`.
+
+#### 2. FastAPI Model Serving API
+```bash
+docker build -t iomt-api .
+docker run -p 8000:8000 iomt-api
+```
+Access interactive OpenAPI documentation at `http://127.0.0.1:8000/docs`.
 
 ---
 
 ## 🧪 Unit Testing
-The dashboard's statistical functions are thoroughly tested against **SciPy** and **Statsmodels** standard outputs:
+All underlying statistical formulas are verified against standard **SciPy** and **Statsmodels** implementations:
 ```bash
-pytest tests/test_stats_utils.py
+python -m pytest tests/
 ```
 
 ---
@@ -106,18 +176,23 @@ pytest tests/test_stats_utils.py
 │   └── plot_utils.py              # Consistent Plotly dark/light styling and color palettes
 ├── tests/
 │   └── test_stats_utils.py        # Pytest test suite benchmarking against SciPy
-├── main.py                        # FastAPI /predict serving endpoint (preserved)
-├── demo.py                        # Minimal JSON predictor (preserved / folded into Tab 6)
+├── main.py                        # FastAPI /predict serving endpoint
+├── demo.py                        # Minimal JSON predictor
 ├── rf_5class_full.joblib          # Trained Random Forest 5-class model
-├── requirements.txt               # Updated dependencies
-├── Dockerfile                     # Preserved API container
-└── Dockerfile.dashboard           # Dedicated Streamlit dashboard container
+├── requirements.txt               # Project dependencies
+├── Dockerfile                     # API containerization
+├── Dockerfile.dashboard           # Dashboard containerization
+└── README.md                      # Comprehensive project documentation
 ```
 
 ---
 
-## 🔬 Dataset & Scientific Citation
-- **Source**: Dadkhah et al., *CICIoMT2024: A Dataset for Internet of Medical Things Cybersecurity Analysis*, Canadian Institute for Cybersecurity, University of New Brunswick.
-- **Features**: 45 numeric flow features covering packet lengths, protocol indicators, flag counts, and time-window statistics.
-- **Classes**: Benign plus 5 attack families: DDoS, DoS, MQTT, Recon, and Spoofing.
-- **Note on Class Ratios**: Class proportions are dynamically computed directly from loaded data in memory, avoiding hardcoded or contradictory historical values.
+## 🔬 Scientific Dataset Citation
+```bibtex
+@article{dadkhah2024ciciomt2024,
+  title={CICIoMT2024: A Dataset for Internet of Medical Things Cybersecurity Analysis},
+  author={Dadkhah, Sajjad and others},
+  journal={Canadian Institute for Cybersecurity, University of New Brunswick},
+  year={2024}
+}
+```
