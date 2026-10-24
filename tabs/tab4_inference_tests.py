@@ -1,6 +1,6 @@
 """
 Tab 4: Estimation, Hypothesis Testing & ANOVA (Unit 4)
-Point estimation (Bessel's correction proof), Confidence Intervals (Z, t, Wilson),
+Point estimation (Bessel's correction proof),
 One-Sample & Two-Sample Welch t-tests, Type I/II Error and Power analysis,
 Chi-Square Goodness-of-Fit and Independence tests, and One-Way ANOVA with Tukey HSD.
 """
@@ -14,8 +14,6 @@ import plotly.express as px
 
 from utils.stats_utils import (
     simulate_variance_bias,
-    confidence_interval_mean,
-    confidence_interval_proportion,
     one_sample_test,
     two_sample_welch,
     type_errors_power,
@@ -38,10 +36,6 @@ def render_tab4(df: pd.DataFrame, full_df: pd.DataFrame, primary_feature: str):
         ### Principles of Estimation & Hypothesis Testing
         - **Unbiased Variance Estimator (Bessel's Correction)**:
           $$s^2 = \frac{1}{n - 1} \sum_{i=1}^n (x_i - \bar{x})^2 \quad \text{guarantees} \quad E[s^2] = \sigma^2$$
-        - **Confidence Interval for the Mean**:
-          $$\text{Known } \sigma: \; \bar{x} \pm z_{\alpha/2} \frac{\sigma}{\sqrt{n}}, \quad \text{Unknown } \sigma: \; \bar{x} \pm t_{\alpha/2, \, n-1} \frac{s}{\sqrt{n}}$$
-        - **Wilson Score Interval for Proportion**:
-          $$\frac{\hat{p} + \frac{z^2}{2n} \pm z \sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}$$
         - **Two-Sample Welch's t-Test & Cohen's d**:
           $$t = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}}, \quad \text{Cohen's } d = \frac{\bar{x}_1 - \bar{x}_2}{s_{\text{pooled}}}$$
         - **Type I ($\alpha$) and Type II ($\beta$) Error**:
@@ -102,76 +96,8 @@ def render_tab4(df: pd.DataFrame, full_df: pd.DataFrame, primary_feature: str):
 
     st.markdown("---")
 
-    # Section 2: Confidence Intervals & Repeated Sampling Simulation
-    st.subheader("2. Confidence Intervals: Mean (Z vs t) & Proportion")
-    col_ci1, col_ci2, col_ci3 = st.columns(3)
-    with col_ci1:
-        ci_conf = st.selectbox("Confidence Level (1 - α):", options=[0.80, 0.90, 0.95, 0.99], index=2)
-    with col_ci2:
-        sigma_mode = st.radio("Population Standard Deviation (σ):", options=["Unknown (Use Student's t)", "Known (Use Standard Normal Z)"])
-    with col_ci3:
-        known_sigma_val = st.number_input("Known σ value:", value=float(df[primary_feature].std(ddof=1)), format="%.2f") if "Known" in sigma_mode else None
-
-    ci_res = confidence_interval_mean(
-        inf_df[primary_feature].values,
-        confidence=ci_conf,
-        sigma_known=known_sigma_val
-    )
-
-    kpi_ci1, kpi_ci2, kpi_ci3, kpi_ci4 = st.columns(4)
-    kpi_ci1.metric("Sample Mean x̄", f"{ci_res['mean']:.3f}")
-    kpi_ci2.metric("Margin of Error (E)", f"±{ci_res['margin_of_error']:.3f}")
-    kpi_ci3.metric(f"{int(ci_conf*100)}% CI Lower Bound", f"{ci_res['ci_lower']:.3f}")
-    kpi_ci4.metric(f"{int(ci_conf*100)}% CI Upper Bound", f"{ci_res['ci_upper']:.3f}")
-
-    # Repeated Sampling Simulation
-    with st.expander("🔁 Interactive Repeated Sampling Simulation (Confidence Interval Coverage)", expanded=False):
-        st.markdown(r"Draw 100 independent samples of size $n=30$. In green: intervals capturing the true population mean $\mu$. In red: intervals that miss $\mu$.")
-        pop_mu = float(df[primary_feature].mean())
-        
-        rng_sim = np.random.default_rng(42)
-        n_draws = 100
-        sample_sz = 30
-        
-        ci_lowers = []
-        ci_uppers = []
-        captured = []
-        
-        for _ in range(n_draws):
-            sample = rng_sim.choice(pop_feature_data, size=sample_sz, replace=True)
-            res = confidence_interval_mean(sample, confidence=ci_conf)
-            ci_lowers.append(res["ci_lower"])
-            ci_uppers.append(res["ci_upper"])
-            captured.append(res["ci_lower"] <= pop_mu <= res["ci_upper"])
-            
-        coverage_pct = (sum(captured) / n_draws) * 100.0
-        st.write(rf"**Empirical Coverage Rate**: `{sum(captured)}` out of `{n_draws}` intervals ({coverage_pct:.1f}%) captured true $\mu = {pop_mu:.2f}$. (Expected: {int(ci_conf*100)}%).")
-        
-        fig_sim_ci = go.Figure()
-        for idx in range(n_draws):
-            color = "#2ECC71" if captured[idx] else "#E74C3C"
-            fig_sim_ci.add_trace(go.Scatter(
-                x=[ci_lowers[idx], ci_uppers[idx]],
-                y=[idx, idx],
-                mode="lines",
-                line=dict(color=color, width=2),
-                showlegend=False
-            ))
-        fig_sim_ci.add_vline(x=pop_mu, line=dict(color="#2980B9", width=2.5, dash="dash"), annotation_text=f"True μ = {pop_mu:.2f}")
-        apply_theme(fig_sim_ci, f"100 Simulated {int(ci_conf*100)}% Confidence Intervals", primary_feature, "Sample Index")
-        st.plotly_chart(fig_sim_ci, use_container_width=True, key="tab4_sim_ci_chart")
-
-    # Proportion Confidence Interval (Wilson Score Interval)
-    st.markdown("#### Wilson Score Confidence Interval for Attack Category Proportions")
-    prop_cls = st.selectbox("Select Traffic Class for Proportion Interval:", options=df["category"].unique(), index=len(df["category"].unique())-1)
-    k_success = (df["category"] == prop_cls).sum()
-    prop_ci = confidence_interval_proportion(k_success, len(df), confidence=0.95)
-    st.write(rf"Empirical proportion $\hat{{p}} = {prop_ci['p_hat']:.4f}$ ({prop_ci['p_hat']*100:.2f}%). 95% Wilson Score CI: `[{prop_ci['ci_lower']:.4f}, {prop_ci['ci_upper']:.4f}]`.")
-
-    st.markdown("---")
-
-    # Section 3: One-Sample Z-Test & t-Test
-    st.subheader(f"3. One-Sample Hypothesis Testing: {primary_feature}")
+    # Section 2: One-Sample Z-Test & t-Test
+    st.subheader(f"2. One-Sample Hypothesis Testing: {primary_feature}")
     c_h1, c_h2, c_h3, c_h4 = st.columns(4)
     with c_h1:
         mu_0 = st.number_input("Hypothesized Mean (μ0):", value=float(inf_df[primary_feature].mean() * 0.90), format="%.2f")
@@ -200,8 +126,8 @@ def render_tab4(df: pd.DataFrame, full_df: pd.DataFrame, primary_feature: str):
 
     st.markdown("---")
 
-    # Section 4: Two-Sample Welch t-Test (Benign vs Attack)
-    st.subheader("4. Two-Sample Welch's t-Test & Cohen's d Effect Size")
+    # Section 3: Two-Sample Welch t-Test (Benign vs Attack)
+    st.subheader("3. Two-Sample Welch's t-Test & Cohen's d Effect Size")
     st.markdown("Compare feature distributions between **Benign** baseline traffic and a target attack category (e.g. Benign vs Spoofing).")
 
     col_w1, col_w2 = st.columns(2)
@@ -232,8 +158,8 @@ def render_tab4(df: pd.DataFrame, full_df: pd.DataFrame, primary_feature: str):
 
     st.markdown("---")
 
-    # Section 5: Type I and Type II Errors & Statistical Power
-    st.subheader("5. Type I Error (α), Type II Error (β), & Statistical Power (1 - β)")
+    # Section 4: Type I and Type II Errors & Statistical Power
+    st.subheader("4. Type I Error (α), Type II Error (β), & Statistical Power (1 - β)")
     st.markdown("""
     In intrusion detection:
     - **Type I Error ($\alpha$, False Alarm)**: Null hypothesis is true (Benign traffic), but test rejects $H_0$ and triggers an alert.
@@ -280,8 +206,8 @@ def render_tab4(df: pd.DataFrame, full_df: pd.DataFrame, primary_feature: str):
 
     st.markdown("---")
 
-    # Section 6: Chi-Square Tests (Goodness-of-Fit & Independence)
-    st.subheader("6. Chi-Square Goodness-of-Fit & Independence Tests")
+    # Section 5: Chi-Square Tests (Goodness-of-Fit & Independence)
+    st.subheader("5. Chi-Square Goodness-of-Fit & Independence Tests")
     chi_tabs = st.tabs(["Goodness-of-Fit Test", "Test of Independence (Protocol vs Attack)"])
 
     with chi_tabs[0]:
@@ -328,8 +254,8 @@ def render_tab4(df: pd.DataFrame, full_df: pd.DataFrame, primary_feature: str):
 
     st.markdown("---")
 
-    # Section 7: One-Way ANOVA with F-Test & Tukey HSD
-    st.subheader(f"7. One-Way ANOVA with F-Test: {primary_feature} Across Classes")
+    # Section 6: One-Way ANOVA with F-Test & Tukey HSD
+    st.subheader(f"6. One-Way ANOVA with F-Test: {primary_feature} Across Classes")
     anova_res = one_way_anova(inf_df, "category", primary_feature)
 
     if "error" not in anova_res:

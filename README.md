@@ -102,10 +102,9 @@ A dedicated, multi-tab Streamlit dashboard designed for a university **Probabili
 | **Unit 3** | Normal Distribution Fitting & Normality Tests | `Tab 3: Normal & Sampling` | Normal fit ($\mu, \sigma$), Q-Q plots, Shapiro-Wilk and D'Agostino-Pearson tests. |
 | **Unit 3** | Standard Normal ($Z$-Scores) & Anomaly Detection | `Tab 3: Normal & Sampling` | Interactive $Z$-score calculator; $|Z| > \text{threshold}$ anomaly filter with attack composition audit. |
 | **Unit 3** | Normal Approximation to Discrete Distributions | `Tab 3: Normal & Sampling` | Normal approx to Binomial and Poisson with continuity correction ($\pm 0.5$) and error metric. |
-| **Unit 3** | Central Limit Theorem (CLT) Simulation | `Tab 3: Normal & Sampling` | Sliders for $n$ and $M$; theoretical $SE = \sigma/\sqrt{n}$ vs empirical SD of means; sample-size progression. |
+| **Unit 3** | Central Limit Theorem (CLT) Simulation | `Tab 3: Normal & Sampling` | Sliders for $n$ and $M$; theoretical $SE = \sigma/\sqrt{n}$ vs empirical SD of means with normal curve overlay. |
 | **Unit 3** | Hypothesis Testing Rejection Regions | `Tab 3: Normal & Sampling` | Visualized rejection regions (two-tailed, right, left) on the standard Gaussian curve with $\alpha$ slider. |
 | **Unit 4** | Point Estimation & Bessel's Correction ($n-1$) | `Tab 4: Inference & ANOVA` | Monte Carlo simulation demonstrating sample variance bias ($n$) vs unbias ($n-1$). |
-| **Unit 4** | Confidence Intervals for Mean & Proportion | `Tab 4: Inference & ANOVA` | Confidence slider (80%-99%), $\sigma$ known/unknown toggle, 100-sample CI coverage simulation, Wilson Score interval. |
 | **Unit 4** | Hypothesis Testing ($Z$-Test, Welch's $t$-Test) | `Tab 4: Inference & ANOVA` | One-sample and two-sample tests, Welch-Satterthwaite $df$, and Cohen's $d$ effect sizes. |
 | **Unit 4** | Type I ($\alpha$) and Type II ($\beta$) Error Trade-off | `Tab 4: Inference & ANOVA` | Statistical power visualizer; mapping Type I to false alarms and Type II to missed intrusions. |
 | **Unit 4** | Chi-Square Goodness-of-Fit & Independence | `Tab 4: Inference & ANOVA` | Uniform GOF test; Protocol vs Category contingency table with Cramér's $V$ and Pearson residuals. |

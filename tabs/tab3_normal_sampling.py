@@ -242,22 +242,6 @@ def render_tab3(df: pd.DataFrame, full_df: pd.DataFrame, primary_feature: str, l
     apply_theme(fig_clt, f"Sampling Distribution of Mean for {clt_feat} (M={clt_samples}, n={clt_n})", "Sample Mean x̄", "Density")
     st.plotly_chart(fig_clt, use_container_width=True, key="tab3_clt_hist_chart")
 
-    # Progression view comparing n = 2, 10, 30, 100
-    with st.expander("🔬 View CLT Progression (n = 2, 10, 30, 100)", expanded=False):
-        fig_prog = go.Figure()
-        for sample_n_val, color in zip([2, 10, 30, 100], ["#E74C3C", "#E67E22", "#3498DB", "#2ECC71"]):
-            sub_sim = clt_simulation(clt_pop, sample_size=sample_n_val, num_samples=1000, seed=42)
-            fig_prog.add_trace(go.Histogram(
-                x=sub_sim["sample_means"],
-                histnorm="probability density",
-                nbinsx=40,
-                name=f"n = {sample_n_val} (SE={sub_sim['theoretical_se']:.1f})",
-                opacity=0.5,
-                marker=dict(color=color)
-            ))
-        fig_prog.update_layout(barmode="overlay")
-        apply_theme(fig_prog, "CLT Convergence Across Increasing Sample Size n", "Sample Mean x̄", "Density")
-        st.plotly_chart(fig_prog, use_container_width=True, key="tab3_clt_prog_chart")
 
     st.markdown("---")
 
